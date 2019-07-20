@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Feature Remover</title>
+	<link href="https://fonts.googleapis.com/css?family=Tenor+Sans&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Trirong&display=swap" rel="stylesheet">
+
+	<style>
+		body{
+			display: flex;
+			flex-direction: column;
+			width: 100px;
+			max-height: 250px;
+			padding: 5px;
+
+			font-family: 'Tenor Sans', sans-serif;
+		}
+		
+
+		#reset{
+			width: min-content;
+		}
+
+		#reset:hover{
+			cursor: pointer;
+			color: red;
+		}
+
+		#tutorial{
+			position: absolute;
+			bottom: 10px;
+			right: 10px;
+		}
+		
+		input {
+			font-family: 'Trirong', serif;
+			margin: 5px 0;
+			width: 100%;
+			border: none;
+			border-bottom: 2px solid black;
+			outline: none;
+		}
+
+		input[type=button] {
+			height: 30px;
+			background: none;
+			border: 2px solid black;
+		}
+
+		input[type=button]:hover {
+			cursor: pointer;
+			border-bottom: 3px solid black;
+		}
+		
+		
+	</style>
+</head>
+<body>
+	<input type="text" placeholder="Channel Name" name="channel" id="channel" class="visible">
+	<input type="button" value="Block" id="block">
+
+	<a id="reset">reset</a>
+
+	<p> 
+		Made with ☕ by <a href="https://github.com/xanderjakeq" target="_blank">xanderjakeq</a>.<br/>
+		See github <a href="https://github.com/xanderjakeq" target="_blank">repo</a>
+	</p>
+	<script src="popup.js"></script>
+</body>
+</html>
