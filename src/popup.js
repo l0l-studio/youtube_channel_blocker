@@ -1,52 +1,56 @@
-let channel = document.getElementById('channel');
-let block_button = document.getElementById('block');
-let reset = document.getElementById('reset');
+let channel = document.getElementById("channel");
+let block_button = document.getElementById("block");
+let reset = document.getElementById("reset");
 
-let channels =  JSON.parse(localStorage.getItem('channels')) || [];
+let channels = [];
+chrome.storage.sync.get(["channels"], (res) => {
+  channels = [...channels, ...res.channels];
+});
 
-reset.addEventListener("click", function(e){
-	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-		var activeTab = tabs[0];
-		let data = {
-			"message": "reset",
-		};
-		localStorage.removeItem('channels');
+reset.addEventListener("click", function (e) {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var activeTab = tabs[0];
+    let data = {
+      message: "reset",
+    };
+    chrome.storage.sync.clear();
 
-		let options = {
-			type: "basic",
-			title: "Channel Blocker",
-			message: "Reset Successful",
-			iconUrl: "./icon.png"
-		};
-		chrome.notifications.create(options);
-		chrome.tabs.sendMessage(activeTab.id, data);
-	});
-})
+    let options = {
+      type: "basic",
+      title: "Channel Blocker",
+      message: "Reset Successful",
+      iconUrl: "./icon.png",
+    };
+    chrome.notifications.create(options);
+    chrome.tabs.sendMessage(activeTab.id, data);
+  });
+});
 
-block_button.addEventListener("click", function(e){
-	if(channel.value.length > 0){
-		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-			var activeTab = tabs[0];
-			let data = {
-				"message": "updated_channels",
-				channels
-			}
+block_button.addEventListener("click", function (e) {
+  if (channel.value.length > 0) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      var activeTab = tabs[0];
 
-			channels.push(channel.value);
-			localStorage.setItem('channels', JSON.stringify(channels));
+      channels = [...channels, channel.value];
+      chrome.storage.sync.set({ channels: JSON.stringify(channels) });
 
-			let options = {
-				type: "basic",
-				title: "Channel Blocker",
-				message: `Blocked ${channel.value}`,
-				iconUrl: "./icon.png"
-			}
+      console.log(channels);
+      let data = {
+        message: "updated_channels",
+        channels,
+      };
 
-			// reset
-			channel.value = '';
+      let options = {
+        type: "basic",
+        title: "Channel Blocker",
+        message: `Blocked ${channel.value}`,
+        iconUrl: "./icon.png",
+      };
 
-			chrome.notifications.create(options);
-			chrome.tabs.sendMessage(activeTab.id, data);
-		});
-	}
-})
+      channel.value = "";
+
+      chrome.notifications.create(options);
+      chrome.tabs.sendMessage(activeTab.id, data, (res) => {});
+    });
+  }
+});
