@@ -1,56 +1,27 @@
-let channel = document.getElementById("channel");
-let block_button = document.getElementById("block");
-let reset = document.getElementById("reset");
+let channel_input = document.getElementById('channel');
+let block_button = document.getElementById('block');
+let reset = document.getElementById('reset');
 
-let channels = [];
-chrome.storage.sync.get(["channels"], (res) => {
-  channels = [...channels, ...res.channels];
+let options = {
+  type: 'basic',
+  title: 'Channel Blocker',
+  iconUrl: './icon.png',
+};
+
+reset.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ msg: 'reset' });
+  chrome.notifications.create({ ...options, message: 'Reset successful' });
 });
 
-reset.addEventListener("click", function (e) {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    var activeTab = tabs[0];
-    let data = {
-      message: "reset",
-    };
-    chrome.storage.sync.clear();
-
-    let options = {
-      type: "basic",
-      title: "Channel Blocker",
-      message: "Reset Successful",
-      iconUrl: "./icon.png",
-    };
-    chrome.notifications.create(options);
-    chrome.tabs.sendMessage(activeTab.id, data);
+block_button.addEventListener('click', () => {
+  chrome.runtime.sendMessage({
+    msg: 'block_channel',
+    channel: channel_input.value,
   });
-});
 
-block_button.addEventListener("click", function (e) {
-  if (channel.value.length > 0) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      var activeTab = tabs[0];
-
-      channels = [...channels, channel.value];
-      chrome.storage.sync.set({ channels: JSON.stringify(channels) });
-
-      console.log(channels);
-      let data = {
-        message: "updated_channels",
-        channels,
-      };
-
-      let options = {
-        type: "basic",
-        title: "Channel Blocker",
-        message: `Blocked ${channel.value}`,
-        iconUrl: "./icon.png",
-      };
-
-      channel.value = "";
-
-      chrome.notifications.create(options);
-      chrome.tabs.sendMessage(activeTab.id, data, (res) => {});
-    });
-  }
+  chrome.notifications.create({
+    ...options,
+    message: `Blocked ${channel.value}`,
+  });
+  channel_input.value = '';
 });

@@ -5,46 +5,60 @@ let data = {};
 let should_reload = false;
 let loop;
 
+let thumbnail_tags = {
+  main: 'ytd-compact-video-renderer',
+  watch: 'ytd-rich-item-renderer',
+};
+
 window.onload = () => {
-  chrome.runtime.sendMessage({ msg: "page_load" }, (response) => {
+  const contents = document.getElementById('page-manager');
+
+  const observer = new MutationObserver(handle_mutation);
+  observer.observe(contents, { childList: true, subtree: true });
+
+  window.onbeforeunload = () => {
+    observer.disconnect();
+  };
+
+  chrome.runtime.sendMessage({ msg: 'page_load' }, (response) => {
     data = response.channels;
-    loop = setInterval(() => remove_features(data, loop), 100);
+    remove_features(data);
   });
 };
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.message === "updated_channels") {
-    data = [...data, ...request.channels];
-    console.log("contentjs", data);
-    clearInterval(loop);
-    loop = setInterval(() => remove_features(data), 100);
-  } else if (request.message === "reset") {
+  if (request.message === 'updated_channels') {
+    data = request.channels;
+    remove_features(data);
+  } else if (request.message === 'reset') {
     data = [];
   }
   sendResponse();
 });
 
-function remove_features(data) {
-  if (window.location.href !== "https://www.youtube.com/") {
-    should_reload = true;
-    return;
+const handle_mutation = (mutation_list, observer) => {
+  for (const mutation of mutation_list) {
+    if (mutation.type === 'childList') {
+      remove_features(data);
+    }
   }
-  if (should_reload) {
-    location.reload();
-    should_reload = false;
-  }
+};
 
-  let vid_groups = document.getElementsByTagName("ytd-item-section-renderer");
-  let videos = document.getElementsByTagName("ytd-rich-item-renderer");
-  console.log(data);
+function remove_features(data) {
+  let page = window.location.href.match('watch') ? 'main' : 'watch';
+
+  let vid_groups = document.getElementsByTagName('ytd-item-section-renderer');
+  let videos = document.getElementsByTagName(thumbnail_tags[page]);
+
   for (let i = 0; i < videos.length; i++) {
     let channel_name = videos[i].getElementsByClassName(
-      "yt-simple-endpoint style-scope yt-formatted-string"
+      'yt-simple-endpoint style-scope yt-formatted-string'
     );
+
     if (channel_name.length > 0) {
       channel_name = channel_name[0].innerHTML;
+
       if (data.includes(channel_name)) {
-        console.log(videos[i]);
         videos[i].remove();
       }
     }
@@ -75,7 +89,7 @@ function remove_features(data) {
 }
 
 function generate_block_btn(channel_name) {
-  let btn = document.createElement("Button");
+  let btn = document.createElement('Button');
   let text_node = document.createTextNode(`Block ${channel_name}`);
   btn.appendChild(text_node);
   btn.setAttribute(
@@ -89,14 +103,14 @@ function generate_block_btn(channel_name) {
     `
   );
   btn.onmouseover = () => {
-    btn.style.cursor = "pointer";
+    btn.style.cursor = 'pointer';
   };
   btn.onfocus = () => {
-    btn.style.border = "none";
+    btn.style.border = 'none';
   };
   btn.onclick = () => {
     chrome.runtime.sendMessage(
-      { msg: "add_channel", channel: channel_name },
+      { msg: 'block_channel', channel: channel_name },
       (response) => {
         data.channels = response.channels;
       }
