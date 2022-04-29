@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Channel Blocker",
-    "author": "1o1.wtf",
+    "author": "1o1.wtf [https://github.com/thelostcreatives]",
     "description":"Block irrelevant channels from the home page of youtube.",
     "version": "1.0",
     "action": {
