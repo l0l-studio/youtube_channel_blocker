@@ -1,46 +1,62 @@
-let channels = [];
+let channels = new Set();
 chrome.storage.sync.get(['channels'], (res) => {
   if (res.channels) {
-    channels = [...channels, ...JSON.parse(res.channels)];
+    for (const channel of JSON.parse(res.channels)) {
+      channels.add(channel);
+    }
   }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.msg === 'page_load') {
-    sendResponse({
-      channels,
-      //key_words,
-    });
-  } else if (request.msg === 'block_channel') {
-    if (!channels.includes(request.channel)) {
-      channels.push(request.channel);
+  switch (request.msg) {
+    case 'page_load':
+      sendResponse({
+        channels: set_to_array(channels),
+      });
+      break;
 
-      chrome.storage.sync.set({ channels: JSON.stringify(channels) });
-      chrome.tabs.query({}, function (tabs) {
-        //const tab = tabs[0];
+    case 'block_channel':
+      debugger;
+      if (!channels.has(request.channel)) {
+        channels.add(request.channel);
 
-        let data = {
-          message: 'updated_channels',
-          channels,
+        chrome.storage.sync.set({
+          channels: JSON.stringify(set_to_array(channels)),
+        });
+
+        chrome.tabs.query({}, function (tabs) {
+          const data = {
+            message: 'updated_channels',
+            channel: request.channel,
+          };
+
+          for (let i = 0; i < tabs.length; i++) {
+            chrome.tabs.sendMessage(tabs[i].id, data);
+          }
+        });
+      }
+      break;
+
+    case 'reset':
+      chrome.storage.sync.clear();
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        const tab = tabs[0];
+
+        const data = {
+          message: 'reset',
         };
 
-        for (let i = 0; i < tabs.length; i++) {
-          chrome.tabs.sendMessage(tabs[i].id, data);
-        }
+        chrome.tabs.sendMessage(tab.id, data);
       });
-    }
-  } else if (request.msg === 'reset') {
-    chrome.storage.sync.clear();
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      const tab = tabs[0];
+      sendResponse();
+      break;
 
-      let data = {
-        message: 'reset',
-      };
-
-      chrome.tabs.sendMessage(tab.id, data);
-    });
-    sendResponse(channels);
+    default:
+      throw 'action not supported';
   }
   return true;
 });
+
+const set_to_array = (set) => {
+  return [...set];
+};
