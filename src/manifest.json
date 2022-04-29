@@ -13,7 +13,6 @@
     "permissions": [
         "notifications",
         "storage",
-        "webRequest",
         "scripting",
         "activeTab"
     ],
