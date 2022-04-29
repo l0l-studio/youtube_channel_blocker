@@ -40,13 +40,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'reset':
       chrome.storage.sync.clear();
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        const tab = tabs[0];
-
         const data = {
           message: 'reset',
         };
 
-        chrome.tabs.sendMessage(tab.id, data);
+        for (let i = 0; i < tabs.length; i++) {
+          chrome.tabs.sendMessage(tabs[i].id, data);
+        }
       });
       sendResponse();
       break;
