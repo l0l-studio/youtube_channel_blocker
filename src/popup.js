@@ -1,52 +1,27 @@
-let channel = document.getElementById('channel');
-let block_button = document.getElementById('block');
-let reset = document.getElementById('reset');
+const channel_input = document.getElementById('channel');
+const block_button = document.getElementById('block');
+const reset = document.getElementById('reset');
 
-let channels =  JSON.parse(localStorage.getItem('channels')) || [];
+const options = {
+  type: 'basic',
+  title: 'Channel Blocker',
+  iconUrl: './icon.png',
+};
 
-reset.addEventListener("click", function(e){
-	chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-		var activeTab = tabs[0];
-		let data = {
-			"message": "reset",
-		};
-		localStorage.removeItem('channels');
+block_button.addEventListener('click', () => {
+  chrome.runtime.sendMessage({
+    msg: 'block_channel',
+    channel: channel_input.value,
+  });
 
-		let options = {
-			type: "basic",
-			title: "Channel Blocker",
-			message: "Reset Successful",
-			iconUrl: "./icon.png"
-		};
-		chrome.notifications.create(options);
-		chrome.tabs.sendMessage(activeTab.id, data);
-	});
-})
+  chrome.notifications.create({
+    ...options,
+    message: `Blocked ${channel.value}`,
+  });
+  channel_input.value = '';
+});
 
-block_button.addEventListener("click", function(e){
-	if(channel.value.length > 0){
-		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-			var activeTab = tabs[0];
-			let data = {
-				"message": "updated_channels",
-				channels
-			}
-
-			channels.push(channel.value);
-			localStorage.setItem('channels', JSON.stringify(channels));
-
-			let options = {
-				type: "basic",
-				title: "Channel Blocker",
-				message: `Blocked ${channel.value}`,
-				iconUrl: "./icon.png"
-			}
-
-			// reset
-			channel.value = '';
-
-			chrome.notifications.create(options);
-			chrome.tabs.sendMessage(activeTab.id, data);
-		});
-	}
-})
+reset.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ msg: 'reset' });
+  chrome.notifications.create({ ...options, message: 'Reset successful' });
+});

@@ -1,18 +1,62 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	let channels = JSON.parse(localStorage.getItem('channels')) || [];
-	let key_words = JSON.parse(localStorage.getItem('key_words')) || [];
-
-	if (request.msg === 'page_load') {
-		sendResponse({
-			channels,
-			key_words
-		});
-	}
-	else if (request.msg === 'add_channel') {
-		if (!channels.includes(request.channel)){
-			channels.push(request.channel);
-			localStorage.setItem('channels', JSON.stringify(channels));
-			sendResponse({message: 'updated_channels', channels});
-		}
-	}
+let channels = new Set();
+chrome.storage.sync.get(['channels'], (res) => {
+  if (res.channels) {
+    for (const channel of JSON.parse(res.channels)) {
+      channels.add(channel);
+    }
+  }
 });
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  switch (request.msg) {
+    case 'page_load':
+      sendResponse({
+        channels: set_to_array(channels),
+      });
+      break;
+
+    case 'block_channel':
+      debugger;
+      if (!channels.has(request.channel)) {
+        channels.add(request.channel);
+
+        chrome.storage.sync.set({
+          channels: JSON.stringify(set_to_array(channels)),
+        });
+
+        chrome.tabs.query({}, function (tabs) {
+          const data = {
+            message: 'updated_channels',
+            channel: request.channel,
+          };
+
+          for (let i = 0; i < tabs.length; i++) {
+            chrome.tabs.sendMessage(tabs[i].id, data);
+          }
+        });
+      }
+      break;
+
+    case 'reset':
+      chrome.storage.sync.clear();
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        const data = {
+          message: 'reset',
+        };
+
+        for (let i = 0; i < tabs.length; i++) {
+          chrome.tabs.sendMessage(tabs[i].id, data);
+        }
+      });
+      sendResponse();
+      break;
+
+    default:
+      throw 'action not supported';
+  }
+  return true;
+});
+
+const set_to_array = (set) => {
+  return [...set];
+};

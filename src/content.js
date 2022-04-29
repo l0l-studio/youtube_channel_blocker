@@ -1,99 +1,77 @@
 /*----------------------------
 GLOBALS
 ----------------------------*/
-let data = {};
+let data = new Set();
 let should_reload = false;
-let loop;
+
+const thumbnail_tags = {
+  main: 'ytd-rich-item-renderer',
+  watch: 'ytd-compact-video-renderer',
+};
+
+const channel_name_element = 'yt-formatted-string';
 
 window.onload = () => {
-	chrome.runtime.sendMessage({msg: "page_load"}, (response) => {
-		data = response;
-		loop = setInterval(() => remove_features(data, loop), 100);
-	});
-}
+  const contents = document.getElementById('page-manager');
+  const secondary = document.getElementById('secondary');
 
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-	if(request.message === 'updated_channels'){
-		data.channels = request.channels;
-		clearInterval(loop);
-		loop = setInterval(() => remove_features(data, loop), 100);
-	}
-	else if (request.message === 'reset') {
-		data = {
-			channels: [],
-			key_words: []
-		};
-	}
+  const observer_0 = new MutationObserver(handle_mutation);
+  const observer_1 = new MutationObserver(handle_mutation);
+
+  observer_0.observe(contents, { childList: true, subtree: true });
+  if (secondary) {
+    observer_1.observe(secondary, { childList: true, subtree: true });
   }
-);
 
-function remove_features(data){
-	
-	if (window.location.href !== 'https://www.youtube.com/'){
-		should_reload = true;
-		return;
-	}
-	if(should_reload){
-		location.reload();
-		should_reload = false;
-	}
+  window.onbeforeunload = () => {
+    observer_0.disconnect();
+    observer_1.disconnect();
+  };
 
-	let vid_groups = document.getElementsByTagName('ytd-item-section-renderer');
-	let videos = document.getElementsByTagName('ytd-grid-video-renderer');
-	for (let i = 0; i < videos.length; i ++){
-		let video_data = videos[i].children[0].innerText.split('\n');
-		let video_channel= video_data[1];
+  chrome.runtime.sendMessage({ msg: 'page_load' }, (response) => {
+    data = new Set(response.channels);
+    remove_features(data);
+  });
+};
 
-		if (data.channels.includes(video_channel)){
-			videos[i].style.display = 'none';
-		}
-	}
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  switch (request.message) {
+    case 'updated_channels':
+      data.add(request.channel);
+      remove_features(data);
+      break;
 
-	for (let i = 0; i < vid_groups.length; i ++){
-		let group_data = vid_groups[i].innerText.split('\n');
-		let group_channel = group_data[0];
-		if (data.channels.includes(group_channel) || group_data.length === 0){
-			vid_groups[i].style.display = 'none';
-		}
-		else {
-			if (
-				!(group_channel.includes('viewers also watch...') ||
-				group_channel.includes('Recommended') ||
-				group_channel.includes('YouTube Mixes') ||
-				group_channel.includes('Latest YouTube posts') ||
-				group_channel.includes('From your subscriptions'))
-				&& !vid_groups[i].children[4] && group_channel.length != 0
-				){
-					let button = generate_block_btn(group_channel);
-					vid_groups[i].appendChild(button);
-			}
-		}
-	}
-}
+    case 'reset':
+      data.clear();
+      break;
 
-function generate_block_btn(channel_name) {
-	let btn = document.createElement('Button');
-	let text_node = document.createTextNode(`Block ${channel_name}`);
-	btn.appendChild(text_node);
-	btn.setAttribute(`style`, `
-					background: #cc0000;
-					color: wheat;
-					border: none; 
-					border-radius: 1px;
-					font-size: 1.4rem;
-					`);
-	btn.onmouseover = () => {
-		btn.style.cursor = 'pointer';
-	}
-	btn.onfocus = () => {
-		btn.style.border = 'none';
-	}
-	btn.onclick = () => {
-		chrome.runtime.sendMessage({msg: "add_channel", channel: channel_name }, (response) => {
-			data.channels = response.channels;
-		});
-	}
+    default:
+      throw 'event does not exist';
+  }
 
-	return btn;
-}
+  sendResponse();
+});
+
+const handle_mutation = (mutation_list, observer) => {
+  //TODO: use the mutation_list to only process new elements
+  remove_features(data);
+};
+
+const remove_features = (data) => {
+  const page = !window.location.href.match('watch') ? 'main' : 'watch';
+  const videos = document.getElementsByTagName(thumbnail_tags[page]);
+
+  for (let i = 0; i < videos.length; i++) {
+    const cn_containers = videos[i].getElementsByTagName(channel_name_element);
+
+    if (cn_containers.length > 0) {
+      //watch page [0] cause there's only 1 'yt-formatted-string'
+      //main page [1] cause there's 2 'yt-formatted-string'
+      const channel_name = page === 'watch' ? 0 : 1;
+
+      if (data.has(cn_containers[channel_name].innerText)) {
+        videos[i].remove();
+      }
+    }
+  }
+};
