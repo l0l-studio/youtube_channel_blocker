@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (!channels.has(request.channel)) {
                 channels.add(request.channel);
 
-                chrome.storage.local.set({
+                chrome.storage.sync.set({
                     //channels: JSON.stringify(set_to_array(channels)),
                     //channels: set_to_array(channels),
                     [request.channel]: '',
@@ -38,16 +38,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
 
         case 'reset': {
-            chrome.storage.local.clear();
-            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                const data = {
-                    message: 'reset',
-                };
+            chrome.storage.sync.clear();
+            chrome.tabs.query(
+                { active: true, currentWindow: true },
+                function(tabs) {
+                    const data = {
+                        message: 'reset',
+                    };
 
-                for (let i = 0; i < tabs.length; i++) {
-                    chrome.tabs.sendMessage(tabs[i].id, data);
+                    for (let i = 0; i < tabs.length; i++) {
+                        chrome.tabs.sendMessage(tabs[i].id, data);
+                    }
                 }
-            });
+            );
             sendResponse();
             break;
         }
@@ -60,11 +63,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 const get_data = (sendResponse) => {
-    chrome.storage.local.get(null).then((results) => {
+    chrome.storage.sync.get(null).then((results) => {
         const blocked_channels = Object.keys(results);
         for (let channel of blocked_channels) {
             channels.add(channel);
         }
+        sendResponse({ channels: set_to_array(channels) });
     }, on_error);
 };
 
