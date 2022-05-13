@@ -37,13 +37,13 @@ window.onload = () => {
 
         chrome.runtime.sendMessage({ msg: 'page_load' }, (response) => {
             data = new Set(response.channels);
-            console.log(data);
+            console.log('yt_blocker loaded:', data.size);
             remove_features(data);
         });
     });
 };
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     switch (request.message) {
         case 'updated_channels':
             data.add(request.channel);
@@ -71,7 +71,8 @@ const remove_features = (data) => {
     const videos = document.getElementsByTagName(thumbnail_tags[page]);
 
     for (let i = 0; i < videos.length; i++) {
-        const cn_containers = videos[i].getElementsByTagName(channel_name_element);
+        const cn_containers =
+            videos[i].getElementsByTagName(channel_name_element);
 
         if (cn_containers.length > 0) {
             //watch page [0] cause there's only 1 'yt-formatted-string'
