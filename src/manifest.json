@@ -1,31 +1,24 @@
 {
-    "manifest_version": 3,
-    "name": "Channel Blocker",
-    "author": "1o1.wtf [https://github.com/thelostcreatives]",
-    "description":"Block irrelevant channels from the home page of youtube.",
-    "version": "1.0",
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": {
-            "48": "/icon.png"
-        }
-    },
-    "permissions": [
-        "notifications",
-        "storage",
-        "scripting",
-        "activeTab"
-    ],
-    "content_scripts": [
-        {
-            "matches": [
-            "https://*.youtube.com/*"
-            ],
-            "js": ["content.js"],
-            "run_at": "document_start"
-        }
-    ],
-    "background": {
-        "service_worker": "background.js"
+  "manifest_version": 3,
+  "name": "Channel Blocker",
+  "author": "1o1.wtf [https://github.com/thelostcreatives]",
+  "description": "Block irrelevant channels from the home page of youtube.",
+  "version": "1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "/icon.png"
     }
+  },
+  "permissions": ["notifications", "storage", "scripting", "activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["https://*.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }
