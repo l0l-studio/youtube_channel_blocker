@@ -14,10 +14,6 @@ block_button.addEventListener('click', () => {
         channel: channel_input.value,
     });
 
-    chrome.notifications.create({
-        ...options,
-        message: `Blocked ${channel.value}`,
-    });
     channel_input.value = '';
 });
 
