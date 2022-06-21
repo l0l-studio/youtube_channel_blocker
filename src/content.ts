@@ -128,16 +128,15 @@ const add_block_buttons = (
             continue;
 
         if (cn_container.firstElementChild) {
-            const container_el = cn_container as HTMLElement;
             cn_container.insertBefore(
-                create_button(container_el.innerText),
+                create_button(),
                 cn_container.firstElementChild
             );
         }
     }
 };
 
-const create_button = (channel_name: string): HTMLButtonElement => {
+const create_button = (): HTMLButtonElement => {
     let button = document.createElement('button');
     button.innerText = 'block';
     button.classList.add('block_btn');
@@ -151,6 +150,9 @@ const create_button = (channel_name: string): HTMLButtonElement => {
     button.addEventListener('click', (e) => {
         e.stopPropagation();
 
+        const channel_el = button.nextSibling as HTMLElement;
+
+        const channel_name: string = channel_el.innerText;
         if (!confirm(`Block: ${channel_name}?`)) {
             return;
         }
