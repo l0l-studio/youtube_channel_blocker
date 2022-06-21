@@ -1,0 +1,28 @@
+{
+    "name": "youtube_channel_blocker",
+    "version": "1.1.0",
+    "description": "Keep time on youtube.com productive by blocking irrelevant channels.",
+    "main": "index.js",
+    "scripts": {
+        "build": "npm run build_ts; npm run copy_files_to_builddir; npm run remove_export",
+        "copy_files_to_builddir": "find src/ ! -name *.ts -exec cp -t build/ {} +",
+        "build_ts": "npx tsc",
+        "remove_export": "find build/ -type f -name '*.js' -print0 | xargs -0 sed -i '/export/d'",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/thelostcreatives/youtube_channel_blocker.git"
+    },
+    "author": "xanderjakeq",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/thelostcreatives/youtube_channel_blocker/issues"
+    },
+    "homepage": "https://github.com/thelostcreatives/youtube_channel_blocker#readme",
+    "devDependencies": {
+        "@types/chrome": "^0.0.190",
+        "@types/node": "^18.0.0",
+        "typescript": "^4.7.4"
+    }
+}

@@ -1,6 +1,8 @@
-let CHANNELS = new Set();
+import type { NotificationOptions } from 'chrome';
 
-const OPTIONS = {
+const CHANNELS: Set<string> = new Set();
+
+const OPTIONS: NotificationOptions = {
     type: 'basic',
     title: 'Channel Blocker',
     iconUrl: './icon.png',
@@ -23,7 +25,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (!CHANNELS.has(request.channel)) {
                 CHANNELS.add(request.channel);
 
-                chrome.notifications.create({
+                chrome.notifications.create('block', {
                     ...OPTIONS,
                     message: `Blocked ${request.channel}`,
                 });
@@ -73,20 +75,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
 });
 
-const get_data = (sendResponse) => {
-    chrome.storage.sync.get(null).then((results) => {
+const get_data = (sendResponse: Function) => {
+    chrome.storage.sync.get((results: any) => {
         const blocked_channels = Object.keys(results);
         for (let channel of blocked_channels) {
             CHANNELS.add(channel);
         }
         sendResponse({ channels: set_to_array(CHANNELS) });
-    }, on_error);
+    });
 };
 
-const set_to_array = (set) => {
+const set_to_array = (set: Set<string>) => {
     return [...set];
 };
 
-const on_error = (e) => {
+const on_error = (e: any) => {
     console.log(e);
 };
