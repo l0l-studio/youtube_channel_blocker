@@ -1,8 +1,10 @@
-const channel_input = document.getElementById('channel');
+import { NotificationOptions } from 'chrome';
+
+const channel_input = <HTMLInputElement>document.getElementById('channel');
 const block_button = document.getElementById('block');
 const reset = document.getElementById('reset');
 
-const options = {
+const options: NotificationOptions = {
     type: 'basic',
     title: 'Channel Blocker',
     iconUrl: './icon.png',

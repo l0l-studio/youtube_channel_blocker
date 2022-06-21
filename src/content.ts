@@ -1,7 +1,18 @@
+import type { Timer } from 'node';
+
 /*----------------------------
 GLOBALS
 ----------------------------*/
-let DATA = null;
+let DATA: Set<string> = null;
+enum PAGES {
+    Main = 'main',
+    Watch = 'watch',
+}
+
+type PageData = {
+    page: PAGES;
+    channel_index: number;
+};
 
 const THUMBNAIL_TAGS = {
     main: 'ytd-rich-item-renderer',
@@ -27,7 +38,7 @@ window.onload = () => {
         observer_1.disconnect();
     };
 
-    let timeout;
+    let timeout: Timer;
     timeout = setInterval(() => {
         if (DATA) {
             clearTimeout(timeout);
@@ -66,18 +77,26 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     sendResponse();
 });
 
-const handle_mutation = (mutation_list, observer) => {
+const handle_mutation = (
+    mutation_list: MutationRecord[],
+    observer: MutationObserver
+) => {
     const { page, channel_index } = get_location_data();
 
-    const nodes = mutation_list.flatMap((mut) => [
-        ...mut.target.getElementsByTagName(THUMBNAIL_TAGS[page]),
-    ]);
+    const nodes = mutation_list.flatMap((mut: MutationRecord) => {
+        const target_el = mut.target as HTMLElement;
+        return [...target_el.getElementsByTagName(THUMBNAIL_TAGS[page])];
+    });
 
     add_block_buttons(channel_index, nodes);
     remove_features(channel_index, DATA, nodes);
 };
 
-const remove_features = (channel_index, data, video_elements) => {
+const remove_features = (
+    channel_index: number,
+    data: Set<string>,
+    video_elements: HTMLCollectionOf<Element> | Element[]
+) => {
     for (let i = 0; i < video_elements.length; i++) {
         const cn_containers =
             video_elements[i].getElementsByTagName(channel_name_element);
@@ -85,8 +104,8 @@ const remove_features = (channel_index, data, video_elements) => {
         if (cn_containers.length > 0) {
             //watch page [0] cause there's only 1 'yt-formatted-string'
             //main page [1] cause there's 2 'yt-formatted-string'
-            const channel_name =
-                cn_containers[channel_index].innerText.split('\n')[1];
+            const el = cn_containers[channel_index] as HTMLElement;
+            const channel_name = el.innerText.split('\n')[1];
 
             if (data.has(channel_name)) {
                 video_elements[i].remove();
@@ -95,7 +114,10 @@ const remove_features = (channel_index, data, video_elements) => {
     }
 };
 
-const add_block_buttons = (channel_index, video_elements) => {
+const add_block_buttons = (
+    channel_index: number,
+    video_elements: HTMLCollectionOf<Element> | Element[]
+) => {
     for (let i = 0; i < video_elements.length; i++) {
         const cn_container =
             video_elements[i].getElementsByTagName(channel_name_element)[
@@ -106,15 +128,16 @@ const add_block_buttons = (channel_index, video_elements) => {
             continue;
 
         if (cn_container.firstElementChild) {
+            const container_el = cn_container as HTMLElement;
             cn_container.insertBefore(
-                create_button(cn_container.innerText),
+                create_button(container_el.innerText),
                 cn_container.firstElementChild
             );
         }
     }
 };
 
-const create_button = (channel_name) => {
+const create_button = (channel_name: string): HTMLButtonElement => {
     let button = document.createElement('button');
     button.innerText = 'block';
     button.classList.add('block_btn');
@@ -141,8 +164,10 @@ const create_button = (channel_name) => {
     return button;
 };
 
-const get_location_data = () => {
-    const page = !window.location.href.match('watch') ? 'main' : 'watch';
+const get_location_data = (): PageData => {
+    const page: PAGES = !window.location.href.match('watch')
+        ? PAGES.Main
+        : PAGES.Watch;
     const channel_index = page === 'watch' ? 0 : 1;
 
     return { page, channel_index };
