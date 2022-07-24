@@ -7,6 +7,7 @@
         "build": "npm run build_ts; npm run copy_files_to_builddir; npm run remove_export",
         "copy_files_to_builddir": "find src/ ! -name *.ts -exec cp -t build/ {} +",
         "build_ts": "npx tsc",
+        "dev": "npx swc src -d build -w",
         "remove_export": "find build/ -type f -name '*.js' -print0 | xargs -0 sed -i '/export/d'",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
@@ -21,8 +22,11 @@
     },
     "homepage": "https://github.com/thelostcreatives/youtube_channel_blocker#readme",
     "devDependencies": {
+        "@swc/cli": "^0.1.57",
+        "@swc/core": "^1.2.218",
         "@types/chrome": "^0.0.190",
-        "@types/node": "^18.0.0",
+        "@types/node": "^18.0.6",
+        "chokidar": "^3.5.3",
         "typescript": "^4.7.4"
     }
 }
